@@ -24,14 +24,14 @@ def is_empty_dir(dir_path: Path, ignore_files: list) -> bool:
     except PermissionError:
         return False
 
-def generate_md_headings(dir_path: Path, depth: int, ignore_files: list) -> list:
+def generate_md_lists(dir_path: Path, indent_level: int, ignore_files: list) -> list:
     """
-    递归生成 Markdown 多级标题格式的目录结构。
+    递归生成 Markdown 缩进列表格式的目录结构（支持无限深度）。
     
     :param dir_path: 当前遍历的目录路径
-    :param depth: 当前的标题层级（决定 '#' 的数量）
+    :param indent_level: 当前的缩进层级（决定前面有多少个空格）
     :param ignore_files: 需要忽略的文件名列表
-    :return: 包含 Markdown 标题字符串的列表
+    :return: 包含 Markdown 列表字符串的列表
     """
     lines = []
     try:
@@ -39,15 +39,18 @@ def generate_md_headings(dir_path: Path, depth: int, ignore_files: list) -> list
         items = [p for p in dir_path.iterdir() if p.name not in ignore_files]
         items.sort(key=lambda x: (not x.is_dir(), x.name.lower()))
     except PermissionError:
-        return [f"{'#' * depth} [拒绝访问]"]
+        # 2个空格为一个缩进层级
+        indent = "  " * indent_level
+        return [f"{indent}- [拒绝访问]"]
 
     for item in items:
-        # 根据当前深度生成对应数量的 '#'
-        lines.append(f"{'#' * depth} {item.name}")
+        # 根据当前深度生成对应数量的空格缩进
+        indent = "  " * indent_level
+        lines.append(f"{indent}- {item.name}")
         
         if item.is_dir():
-            # 如果是文件夹，递归调用，深度 +1
-            lines.extend(generate_md_headings(item, depth + 1, ignore_files))
+            # 如果是文件夹，递归调用，缩进层级 +1
+            lines.extend(generate_md_lists(item, indent_level + 1, ignore_files))
             
     return lines
 
@@ -88,25 +91,27 @@ def main():
     if root_single_items:
         md_content.append("## 📄 根目录文件与空文件夹\n")
         for item in root_single_items:
-            # 内部文件作为三级标题
-            md_content.append(f"### {item.name}\n")
+            # 内部文件作为无序列表
+            md_content.append(f"- {item.name}\n")
+        md_content.append("\n") # 添加空行分隔
 
     # 2. 构建各个“深层文件夹”分支 (二级标题)
     if deep_folders:
         for folder in deep_folders:
             # 每个深层文件夹本身作为一个二级分支
             md_content.append(f"## 📁 {folder.name}\n")
-            # 调用递归函数生成该文件夹的内部结构，从三级标题开始
-            folder_content = generate_md_headings(folder, depth=3, ignore_files=ignore_list)
-            # 为了保证 Markdown 格式规范，每个标题后加上换行符
+            # 调用递归函数生成该文件夹的内部结构，初始缩进层级为 0
+            folder_content = generate_md_lists(folder, indent_level=0, ignore_files=ignore_list)
+            # 写入列表内容
             md_content.extend([f"{line}\n" for line in folder_content])
+            md_content.append("\n") # 添加空行分隔
 
     # 将结果写入 Markdown 文件
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.writelines(md_content)
         print(f"✅ 提取成功！结果已保存至: {output_path}")
-        print("💡 提示：你可以直接将生成的 .md 文件导入到 XMind 等思维导图软件中。")
+        print("💡 提示：已修复深层文件夹解析问题，现在支持无限深度的思维导图生成！")
     except Exception as e:
         print(f"❌ 写入文件时发生错误: {e}")
 
