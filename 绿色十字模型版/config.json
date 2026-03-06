@@ -1,0 +1,9 @@
+{
+    "width": 100,
+    "height": 100,
+    "thickness": 5,
+    "color": "green",
+    "interval_ms": 1000,
+    "ollama_model": "gemma3:27b-cloud",
+    "prompt": "找到“Google Chrome”图标，根据提供的分辨率，返回其在图片中的中心坐标（以 JSON 列表 [x, y] 的形式），无需输出任何解释。"
+}

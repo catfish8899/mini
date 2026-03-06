@@ -1,0 +1,6 @@
+VAV/
+├── config.json           (原文件，保持不变)
+├── config_loader.py      (新文件：负责配置加载)
+├── inference_engine.py   (新文件：负责 AI 推理)
+├── overlay_window.py     (新文件：负责 GUI 绘制)
+└── main.py               (新文件：程序入口)
